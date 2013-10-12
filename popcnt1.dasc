@@ -1,0 +1,47 @@
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/mman.h>
+
+#include "dynasm/dasm_proto.h"
+#include "dynasm/dasm_x86.h"
+
+|.arch x64
+|.actionlist actionlist
+
+int main(int argc, char** argv) {
+    if(argc < 2) {
+        fprintf(stderr, "If you give me an integer, I will tell you how many set bits there are in it.\n");
+        return 1;
+    }
+    int input = atoi(argv[1]);
+    
+    dasm_State* Dst[1];
+    dasm_init(Dst, 1);
+    dasm_setup(Dst, actionlist);
+
+    | mov r10d, input
+    | popcnt eax, r10d
+    | ret
+
+    size_t codesize;
+    int dasm_status = dasm_link(Dst, &codesize);
+    assert(dasm_status == DASM_S_OK);
+
+    void* buffer = mmap(NULL, codesize, PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    assert(buffer != MAP_FAILED);
+
+    dasm_encode(Dst, buffer);
+    dasm_free(Dst);
+
+    assert(0 == mprotect(buffer, codesize, PROT_EXEC | PROT_READ));
+
+    typedef int (*intf)(int);
+    intf f = (intf)buffer;
+
+    printf("%d\n",f(0));
+
+    assert(0 == munmap(buffer, codesize));
+
+    return 0;
+}

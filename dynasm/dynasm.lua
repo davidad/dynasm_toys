@@ -877,6 +877,8 @@ local function dasmhead(out)
 ** DO NOT EDIT! The original file is in "%s".
 */
 
+#include "dynasm/dasm_proto.h"
+
 #if DASM_VERSION != %d
 #error "Version mismatch between DynASM and included encoding engine"
 #endif
