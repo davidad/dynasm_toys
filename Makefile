@@ -1,4 +1,4 @@
-all: popcnt1 popcnt2
+all: popcnt1 popcnt2 popcnt3
 
 %.c: %.dasc
 	luajit dynasm/dynasm.lua -o $@ $<

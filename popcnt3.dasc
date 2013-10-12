@@ -1,0 +1,40 @@
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/mman.h>
+
+#include "dynasm/dasm_proto.h"
+#include "dynasm/dasm_x86.h"
+#include "dynasm_macros.h"
+
+|.arch x64
+|.actionlist actionlist
+
+typedef int (*intf)(int);
+
+intf gen_popcnt(void) {
+    dasm_State* Dst[1]; void* buffer;
+
+    DASM_OPEN;
+
+    | popcnt eax, edi
+    | ret
+
+    DASM_ALINK;
+
+    return (intf)buffer;
+}
+
+int main(int argc, char** argv) {
+    if(argc < 2) {
+        fprintf(stderr, "If you give me an integer, I will tell you how many set bits there are in it.\n");
+        return 1;
+    }
+    int input = atoi(argv[1]);
+
+    intf f = gen_popcnt();
+
+    printf("%d\n",f(input));
+
+    return 0;
+}
