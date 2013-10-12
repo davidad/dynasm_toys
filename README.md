@@ -1,4 +1,4 @@
-jitdemo
+dynasm\_toys
 =======
 
-Demo programs for my blog entry "Hello, JIT World!"
+Attempts by me, David Dalrymple, to gain experience using Mike Pall's DynASM tool.
