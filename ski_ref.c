@@ -58,17 +58,12 @@ int parse(char c) {
             break;
         case '.':
             if(sp - stack >= 1) {
-                //fprintf(stderr,"foo\n");
-                //show(*(sp-1),0);
-                //show(*(sp-2),0);
                 term_t node = malloc(sizeof(struct term));
                 node->type = NOT_ATOM;
                 node->f = *(--sp);
                 node->x = *(--sp);
                 *sp = node;
                 sp++;
-                //show(*sp,0);
-                //fprintf(stderr,"oof\n");
             }
             break;
         default:
@@ -77,17 +72,91 @@ int parse(char c) {
     return 0;
 }
 
+void freeall(term_t n) {
+    if(n->type == NOT_ATOM) {
+        freeall(n->f);
+        freeall(n->x);
+        free(n);
+    }
+}
+
+int reduce(term_t* pp) {
+    term_t p = *pp;
+
+    // One level...
+    if(p->type == NOT_ATOM) {
+
+        // Check for I
+        if(p->f->type == ATOM_I) {
+            *pp = p->x;
+            free(p);
+            return 1;
+        }
+
+        // Two levels...
+        if(p->f->type == NOT_ATOM) {
+
+            // Check for K
+            if(p->f->f->type == ATOM_K) {
+                *pp = p->f->x;
+                freeall(p->x);
+                free(p);
+                return 2;
+            }
+
+            // Three levels...
+
+            if(p->f->f->type == NOT_ATOM) {
+
+                // Check for S
+                if(p->f->f->f->type == ATOM_S) {
+                    term_t zy = malloc(sizeof(struct term));
+                    term_t zx = malloc(sizeof(struct term));
+                    term_t zyzx = malloc(sizeof(struct term));
+                    zyzx->type = zy->type = zx->type = NOT_ATOM;
+
+                    zy->x = zx->x = p->x;
+                    zy->f = p->f->x;
+                    zx->f = p->f->f->x;
+                    zyzx->x = zy;
+                    zyzx->f = zx;
+
+                    free(p->f->f);
+                    free(p->f);
+                    free(p);
+                    *pp = zyzx;
+                    return 3;
+                }
+            }
+        }
+
+        int s = reduce(&(p->f));
+        if(!s) {
+            return reduce(&(p->x));
+        } else {
+            return s;
+        }
+
+    } else {
+        return 0;
+    }
+}
+
 int main(void) {
     char c;
+    printf("> ");
     do {
         c = getchar();
     } while(!parse(c));
 
-    while(sp > stack) {
-        sp--;
-        show(*sp,0);
-        printf("===\n");
-    }
+    do {
+        term_t* p = sp;
+        while(p > stack) {
+            p--;
+            show(*p,0);
+            printf("===\n");
+        }
+    } while(reduce(sp-1));
 
     return 0;
 }
